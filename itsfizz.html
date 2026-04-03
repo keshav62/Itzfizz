@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ITZFIZZ — Premium Motion</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Syne:wght@400;700;800&family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <style>
+    :root {
+      --bg:       #04050a;
+      --surface:  #080a12;
+      --panel:    #0c0e18;
+      --accent:   #d4f73b;
+      --accent2:  #37f5cc;
+      --accent3:  #f73b8c;
+      --text:     #eceef5;
+      --muted:    #4a4d62;
+      --border:   rgba(212,247,59,0.1);
+      --glow:     rgba(212,247,59,0.12);
+      --glow2:    rgba(55,245,204,0.08);
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Syne', sans-serif;
+      overflow-x: hidden;
+      cursor: none;
+    }
+
+    /* ===== CURSOR ===== */
+    #cur {
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      position: fixed; top:0; left:0;
+      pointer-events: none; z-index: 9999;
+      mix-blend-mode: difference;
+      will-change: transform;
+    }
+    #cur-ring {
+      width: 36px; height: 36px;
+      border: 1px solid rgba(212,247,59,0.5);
+      border-radius: 50%;
+      position: fixed; top:0; left:0;
+      pointer-events: none; z-index: 9998;
+      will-change: transform;
+    }
+    #cur-label {
+      position: fixed; top:0; left:0;
+      pointer-events: none; z-index: 9997;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.5rem; letter-spacing: 0.1em;
+      color: var(--accent);
+      opacity: 0;
+      white-space: nowrap;
+      text-transform: uppercase;
+      will-change: transform;
+    }
+
+    /* ===== GRAIN ===== */
+    #grain {
+      position: fixed; inset:0;
+      pointer-events: none; z-index: 10000;
+      opacity: 0.04;
+    }
+
+    /* ===== SCROLL PROGRESS ===== */
+    #sp {
+      position: fixed; top:0; left:0;
+      height: 1px; background: var(--accent);
+      z-index: 9995; width:0%;
+      box-shadow: 0 0 12px var(--accent);
+    }
+
+    /* ===== NAV ===== */
+    nav {
+      position: fixed; top:0; left:0; right:0;
+      z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.6rem 3.5rem;
+    }
+    .nav-bg {
+      position: absolute; inset:0;
+      background: rgba(4,5,10,0.7);
+      backdrop-filter: blur(24px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+    }
+    .nav-logo {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.8rem; letter-spacing: 0.2em;
+      color: var(--accent);
+      position: relative; z-index:1;
+      text-shadow: 0 0 30px rgba(212,247,59,0.4);
+    }
+    .nav-links {
+      display: flex; gap: 3rem; list-style: none;
+      position: relative; z-index:1;
+    }
+    .nav-links a {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem; letter-spacing: 0.2em;
+      text-transform: uppercase; color: var(--muted);
+      text-decoration: none; transition: color 0.3s;
+      position: relative;
+    }
+    .nav-links a::after {
+      content:''; position:absolute; bottom:-4px; left:0; right:0;
+      height:1px; background:var(--accent); transform:scaleX(0);
+      transition: transform 0.3s cubic-bezier(0.23,1,0.32,1);
+    }
+    .nav-links a:hover { color: var(--accent); }
+    .nav-links a:hover::after { transform:scaleX(1); }
+    .nav-cta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem; letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--bg); background: var(--accent);
+      border: none; padding: 0.7rem 1.6rem;
+      cursor: none; position: relative; z-index:1;
+      clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px));
+      transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+      font-weight: 700;
+    }
+    .nav-cta:hover {
+      background: var(--accent2);
+      box-shadow: 0 0 24px rgba(55,245,204,0.4);
+      transform: translateY(-2px);
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      position: relative; height: 100vh;
+      display: flex; flex-direction: column; justify-content: center;
+      overflow: hidden;
+    }
+
+    /* Grid */
+    .hero-grid {
+      position: absolute; inset:0; pointer-events:none;
+      background-image:
+        linear-gradient(rgba(212,247,59,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(212,247,59,0.04) 1px, transparent 1px);
+      background-size: 80px 80px;
+    }
+    /* Diagonal accent line */
+    .hero-diag {
+      position: absolute; pointer-events:none;
+      width: 1px; height: 200%;
+      background: linear-gradient(to bottom, transparent, rgba(212,247,59,0.12), transparent);
+      top: -50%; left: 58%;
+      transform: rotate(15deg);
+    }
+    .hero-diag2 {
+      position: absolute; pointer-events:none;
+      width: 1px; height: 200%;
+      background: linear-gradient(to bottom, transparent, rgba(55,245,204,0.08), transparent);
+      top: -50%; left: 38%;
+      transform: rotate(-8deg);
+    }
+
+    /* Radial glows */
+    .glow-a {
+      position: absolute;
+      width: 900px; height: 900px;
+      background: radial-gradient(circle, rgba(212,247,59,0.06) 0%, transparent 70%);
+      top: 50%; left: 30%; transform: translate(-50%,-50%);
+      pointer-events:none; will-change: transform;
+    }
+    .glow-b {
+      position: absolute;
+      width: 600px; height: 600px;
+      background: radial-gradient(circle, rgba(55,245,204,0.05) 0%, transparent 70%);
+      top: 20%; right: 5%; pointer-events:none;
+    }
+
+    /* ===== HEADLINE ===== */
+    .headline-wrap {
+      position: absolute; inset:0;
+      display: flex; align-items: center; justify-content: center;
+      pointer-events:none; z-index:2;
+    }
+    .headline {
+      font-family: 'Bebas Neue', cursive;
+      font-size: clamp(5.5rem, 14vw, 16rem);
+      letter-spacing: 0.28em; line-height: 0.88;
+      color: transparent;
+      -webkit-text-stroke: 1px rgba(212,247,59,0.18);
+      text-align: center; white-space: nowrap;
+      user-select: none;
+    }
+    .char { display: inline-block; opacity:0; transform: translateY(80px) rotateX(-60deg); }
+
+    /* ===== OVERLINE BADGE ===== */
+    .hero-badge {
+      position: absolute; top: 8rem; left: 3.5rem; z-index:5;
+      display: flex; align-items:center; gap:0.8rem; opacity:0;
+    }
+    .badge-dot {
+      width:6px; height:6px; border-radius:50%;
+      background:var(--accent);
+      box-shadow: 0 0 10px var(--accent);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%,100%{opacity:1;transform:scale(1);}
+      50%{opacity:0.5;transform:scale(0.8);}
+    }
+    .badge-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem; letter-spacing: 0.25em;
+      text-transform: uppercase; color: var(--muted);
+    }
+
+    /* ===== CAR ===== */
+    .car-wrap {
+      position: absolute; inset:0;
+      display: flex; align-items: center; justify-content: center;
+      z-index:3; pointer-events:none;
+    }
+    .car-svg {
+      width: clamp(360px, 58vw, 860px);
+      filter:
+        drop-shadow(0 0 80px rgba(212,247,59,0.18))
+        drop-shadow(0 40px 60px rgba(0,0,0,0.6));
+      will-change: transform;
+    }
+
+    /* ===== SIDE VERTICAL TEXT ===== */
+    .v-text {
+      position: absolute; z-index:5;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--muted);
+      writing-mode: vertical-rl; opacity:0;
+    }
+    .v-left { left: 2rem; top:50%; transform:translateY(-50%) rotate(180deg); }
+    .v-right { right: 2rem; top:50%; transform:translateY(-50%); }
+
+    /* ===== STATS STRIP ===== */
+    .stats-strip {
+      position: absolute; bottom:0; left:0; right:0; z-index:4;
+      display: grid; grid-template-columns: repeat(4,1fr);
+      border-top: 1px solid var(--border);
+      background: rgba(4,5,10,0.6);
+      backdrop-filter: blur(20px);
+    }
+    .stat-card {
+      padding: 1.8rem 2.5rem;
+      border-right: 1px solid var(--border);
+      opacity:0; transform:translateY(20px);
+      position:relative; overflow:hidden; transition: background 0.3s;
+    }
+    .stat-card::before {
+      content:''; position:absolute; top:0; left:0; right:0; height:1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 0.5s cubic-bezier(0.23,1,0.32,1);
+    }
+    .stat-card:hover::before { transform: scaleX(1); }
+    .stat-card:hover { background: rgba(212,247,59,0.03); }
+    .stat-card:last-child { border-right: none; }
+    .stat-number {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 3.8rem; line-height:1;
+      color: var(--accent); display:block;
+      text-shadow: 0 0 30px rgba(212,247,59,0.3);
+    }
+    .stat-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--muted);
+      margin-top: 0.5rem; line-height:1.6;
+    }
+
+    /* ===== SCROLL HINT ===== */
+    .scroll-hint {
+      position: absolute; bottom: 7rem; right: 3rem; z-index:5;
+      display: flex; flex-direction:column; align-items:center;
+      gap: 0.6rem; opacity:0;
+    }
+    .scroll-hint span {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.5rem; letter-spacing: 0.25em;
+      text-transform:uppercase; color: var(--muted);
+      writing-mode: vertical-rl;
+    }
+    .scroll-line {
+      width:1px; height:44px;
+      background: linear-gradient(to bottom, var(--accent), transparent);
+      animation: scrollAnim 2s ease-in-out infinite;
+    }
+    @keyframes scrollAnim {
+      0%{transform:scaleY(0);transform-origin:top;opacity:1;}
+      50%{transform:scaleY(1);transform-origin:top;opacity:1;}
+      51%{transform:scaleY(1);transform-origin:bottom;opacity:1;}
+      100%{transform:scaleY(0);transform-origin:bottom;opacity:0;}
+    }
+
+    /* ===== CORNER MARKERS ===== */
+    .corner {
+      position: absolute; width:20px; height:20px; z-index:5;
+    }
+    .corner-tl { top:5.5rem; left:2rem; border-top:1px solid var(--muted); border-left:1px solid var(--muted); }
+    .corner-tr { top:5.5rem; right:2rem; border-top:1px solid var(--muted); border-right:1px solid var(--muted); }
+    .corner-bl { bottom:4.5rem; left:2rem; border-bottom:1px solid var(--muted); border-left:1px solid var(--muted); }
+    .corner-br { bottom:4.5rem; right:2rem; border-bottom:1px solid var(--muted); border-right:1px solid var(--muted); }
+
+    /* ===== SCROLL SPACE ===== */
+    .scroll-space { height: 220vh; position: relative; }
+    .scroll-content {
+      position: absolute; inset:0;
+      display: flex; flex-direction: column; justify-content: space-around;
+      padding: 0 10vw; pointer-events: none;
+      z-index: 1;
+    }
+    .scroll-section {
+      max-width: 500px;
+      opacity: 1;
+      background: rgba(4,5,10,0.85);
+      backdrop-filter: blur(10px);
+      padding: 2rem;
+      border-radius: 8px;
+      border: 1px solid rgba(212,247,59,0.1);
+      margin-bottom: 2rem;
+    }
+    .scroll-section h2 {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.5rem; font-weight: 700;
+      color: var(--text); margin-bottom: 1rem;
+      line-height: 1.1;
+    }
+    .scroll-section p {
+      font-size: 1.1rem; color: var(--muted);
+      line-height: 1.6;
+    }
+
+    /* ===== SECTION: ABOUT ===== */
+    .about-section {
+      padding: 12rem 10vw;
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 6rem; align-items: center;
+      position: relative;
+    }
+    .about-section::before {
+      content: attr(data-num);
+      position: absolute; left: 5vw; top:8rem;
+      font-family: 'Bebas Neue', cursive;
+      font-size: 12rem; color: rgba(212,247,59,0.03);
+      line-height:1; pointer-events:none;
+    }
+    .section-tag {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.6rem; letter-spacing: 0.3em;
+      text-transform: uppercase; color: var(--accent);
+      display: flex; align-items:center; gap:0.8rem;
+      margin-bottom:2rem;
+    }
+    .section-tag::before {
+      content:''; width:24px; height:1px; background:var(--accent);
+    }
+    .about-heading {
+      font-family: 'Bebas Neue', cursive;
+      font-size: clamp(3.5rem, 6vw, 7rem);
+      letter-spacing: 0.06em; line-height: 0.88;
+      color: var(--text);
+    }
+    .about-heading em {
+      font-style:normal; color: transparent;
+      -webkit-text-stroke: 1px rgba(212,247,59,0.5);
+    }
+    .about-body {
+      color: var(--muted); font-size: 0.95rem;
+      line-height: 1.9; max-width: 420px;
+    }
+    .about-body p + p { margin-top:1.2rem; }
+    .about-cta {
+      display: inline-flex; align-items:center; gap:1rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem; letter-spacing: 0.2em;
+      text-transform:uppercase; color: var(--accent);
+      text-decoration:none; margin-top:2.5rem;
+      padding-bottom:4px;
+      border-bottom: 1px solid rgba(212,247,59,0.3);
+      transition: gap 0.3s, border-color 0.3s;
+    }
+    .about-cta:hover { gap:1.5rem; border-color:var(--accent); }
+    .about-cta-arrow { font-size:1rem; }
+
+    /* ===== FEATURES GRID ===== */
+    .features-section {
+      padding: 0 0 8rem;
+    }
+    .features-header {
+      padding: 0 10vw 4rem;
+      display: flex; align-items: flex-end; justify-content: space-between;
+    }
+    .features-heading {
+      font-family: 'Bebas Neue', cursive;
+      font-size: clamp(3rem, 5vw, 5.5rem);
+      letter-spacing: 0.06em; color: var(--text);
+    }
+    .features-sub {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem; letter-spacing: 0.15em;
+      color: var(--muted); text-transform:uppercase;
+      max-width:240px; text-align:right; line-height:1.7;
+    }
+    .features-grid {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      border-top: 1px solid var(--border);
+    }
+    .feature-card {
+      padding: 3.5rem 3rem;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      position:relative; overflow:hidden;
+      transition: background 0.4s;
+      background: var(--bg);
+    }
+    .feature-card:nth-child(3n) { border-right:none; }
+    .feature-card::before {
+      content:''; position:absolute; inset:0;
+      background: linear-gradient(135deg, rgba(212,247,59,0.04) 0%, transparent 60%);
+      opacity:0; transition: opacity 0.4s;
+    }
+    .feature-card:hover::before { opacity:1; }
+    .feature-card::after {
+      content:''; position:absolute; left:0; bottom:0; top:0;
+      width:2px; background:var(--accent);
+      transform:scaleY(0); transform-origin:bottom;
+      transition: transform 0.5s cubic-bezier(0.23,1,0.32,1);
+    }
+    .feature-card:hover::after { transform:scaleY(1); }
+    .feature-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.58rem; color: var(--accent);
+      letter-spacing: 0.2em; margin-bottom:2rem;
+      display:block;
+    }
+    .feature-icon {
+      font-size: 1.5rem; margin-bottom: 1.5rem; display:block;
+      filter: grayscale(1) brightness(2);
+      transition: filter 0.3s;
+    }
+    .feature-card:hover .feature-icon { filter: none; }
+    .feature-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.15rem; font-weight:800;
+      letter-spacing: 0.03em; color: var(--text);
+      margin-bottom: 1rem;
+    }
+    .feature-desc {
+      font-size: 0.82rem; color: var(--muted);
+      line-height: 1.85;
+    }
+
+    /* ===== MARQUEE ===== */
+    .marquee-section {
+      overflow:hidden; border-top:1px solid var(--border);
+      border-bottom:1px solid var(--border);
+      padding: 1.5rem 0;
+      background: rgba(212,247,59,0.02);
+    }
+    .marquee-track {
+      display:flex; gap:4rem; align-items:center;
+      animation: marquee 20s linear infinite;
+      width:max-content;
+    }
+    @keyframes marquee {
+      from{transform:translateX(0);}
+      to{transform:translateX(-50%);}
+    }
+    .marquee-item {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1rem; letter-spacing: 0.3em;
+      color: var(--muted); white-space:nowrap;
+      display:flex; align-items:center; gap:2rem;
+    }
+    .marquee-dot {
+      width:4px; height:4px; border-radius:50%;
+      background:var(--accent); flex-shrink:0;
+    }
+
+    /* ===== FOOTER ===== */
+    footer {
+      padding: 3rem 3.5rem;
+      display: flex; align-items:center; justify-content:space-between;
+      border-top: 1px solid var(--border);
+    }
+    .footer-logo {
+      font-family: 'Bebas Neue', cursive;
+      font-size: 1.6rem; letter-spacing: 0.2em;
+      color: var(--accent);
+      text-shadow: 0 0 20px rgba(212,247,59,0.3);
+    }
+    .footer-text {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.55rem; letter-spacing: 0.15em;
+      color: var(--muted); text-transform:uppercase;
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media(max-width:768px){
+      nav { padding:1rem 1.5rem; }
+      .nav-links { display:none; }
+      .stats-strip { grid-template-columns: repeat(2,1fr); }
+      .features-grid { grid-template-columns: 1fr; }
+      .feature-card:nth-child(3n){ border-right: none; }
+      .about-section { grid-template-columns:1fr; padding:6rem 6vw; gap:3rem; }
+      .headline { font-size: clamp(3rem,18vw,6rem); letter-spacing:0.15em; }
+      .car-svg { width:90vw; }
+      .corner { display:none; }
+      .v-text { display:none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Grain -->
+<canvas id="grain"></canvas>
+
+<!-- Cursor -->
+<div id="cur"></div>
+<div id="cur-ring"></div>
+<div id="cur-label"></div>
+
+<!-- Scroll progress -->
+<div id="sp"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-bg"></div>
+  <div class="nav-logo">ITZFIZZ</div>
+  <ul class="nav-links">
+    <li><a href="#">Platform</a></li>
+    <li><a href="#">Products</a></li>
+    <li><a href="#">Insights</a></li>
+    <li><a href="#">About</a></li>
+  </ul>
+  <button class="nav-cta">Get Started</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero" id="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-diag"></div>
+  <div class="hero-diag2"></div>
+  <div class="glow-a" id="glowA"></div>
+  <div class="glow-b"></div>
+
+  <!-- Badge -->
+  <div class="hero-badge" id="badge">
+    <div class="badge-dot"></div>
+    <span class="badge-text">Next-Gen Delivery Platform — Est. 2024</span>
+  </div>
+
+  <!-- Headline -->
+  <div class="headline-wrap">
+    <h1 class="headline" id="headline">
+      <span class="char">W</span><span class="char">E</span><span class="char">L</span><span class="char">C</span><span class="char">O</span><span class="char">M</span><span class="char">E</span>&nbsp;<span class="char">I</span><span class="char">T</span><span class="char">Z</span><span class="char">F</span><span class="char">I</span><span class="char">Z</span><span class="char">Z</span>
+    </h1>
+  </div>
+
+  <!-- Car SVG -->
+  <div class="car-wrap">
+    <svg class="car-svg" id="car" viewBox="0 0 920 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="bodyGrad" cx="50%" cy="40%" r="60%">
+          <stop offset="0%" stop-color="#1e2338"/>
+          <stop offset="100%" stop-color="#0d0f18"/>
+        </radialGradient>
+        <radialGradient id="wheelGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="rgba(212,247,59,0.4)"/>
+          <stop offset="100%" stop-color="rgba(212,247,59,0)"/>
+        </radialGradient>
+        <filter id="bodyBlur">
+          <feGaussianBlur stdDeviation="1.5"/>
+        </filter>
+        <linearGradient id="accentLine" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="transparent"/>
+          <stop offset="30%" stop-color="rgba(212,247,59,0.6)"/>
+          <stop offset="70%" stop-color="rgba(212,247,59,0.6)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </linearGradient>
+        <linearGradient id="accentLine2" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="transparent"/>
+          <stop offset="30%" stop-color="rgba(55,245,204,0.5)"/>
+          <stop offset="70%" stop-color="rgba(55,245,204,0.5)"/>
+          <stop offset="100%" stop-color="transparent"/>
+        </linearGradient>
+        <clipPath id="bodyClip">
+          <path d="M90 295 Q155 205 310 172 L410 140 Q460 120 510 140 L610 172 Q765 205 830 295 L850 318 Q860 338 840 348 L80 348 Q60 338 70 318 Z"/>
+        </clipPath>
+      </defs>
+
+      <!-- Shadow -->
+      <ellipse cx="460" cy="382" rx="360" ry="18" fill="rgba(0,0,0,0.55)"/>
+
+      <!-- Body base -->
+      <path d="M90 295 Q155 205 310 172 L410 140 Q460 120 510 140 L610 172 Q765 205 830 295 L850 318 Q860 338 840 348 L80 348 Q60 338 70 318 Z" fill="url(#bodyGrad)"/>
+
+      <!-- Body stripe highlight -->
+      <path d="M90 295 Q155 205 310 172 L410 140 Q460 120 510 140 L610 172 Q765 205 830 295" stroke="rgba(212,247,59,0.08)" stroke-width="1" fill="none"/>
+
+      <!-- Gloss on roof -->
+      <path d="M340 180 L395 148 Q460 125 525 148 L580 180 Z" fill="#111628"/>
+      <!-- Windscreen -->
+      <path d="M340 180 L395 148 Q460 125 525 148 L580 180 Z" fill="#0a0d1a" stroke="rgba(212,247,59,0.15)" stroke-width="0.8"/>
+      <!-- Windscreen glare -->
+      <path d="M355 175 L398 150 L435 138 L400 162 Z" fill="rgba(212,247,59,0.06)"/>
+      <path d="M370 176 L398 158 L412 152 L395 168 Z" fill="rgba(255,255,255,0.04)"/>
+
+      <!-- Body accent line -->
+      <path d="M120 295 Q310 255 460 252 Q610 255 800 295" stroke="url(#accentLine)" stroke-width="1" fill="none"/>
+      <path d="M140 310 Q310 276 460 273 Q610 276 780 310" stroke="rgba(212,247,59,0.05)" stroke-width="1" fill="none"/>
+
+      <!-- Door line -->
+      <line x1="460" y1="252" x2="460" y2="348" stroke="rgba(212,247,59,0.06)" stroke-width="1"/>
+
+      <!-- A-pillar left -->
+      <path d="M340 180 L310 172 L310 200 Z" fill="rgba(212,247,59,0.03)" stroke="rgba(212,247,59,0.08)" stroke-width="0.5"/>
+      <!-- A-pillar right -->
+      <path d="M580 180 L610 172 L610 200 Z" fill="rgba(212,247,59,0.03)" stroke="rgba(212,247,59,0.08)" stroke-width="0.5"/>
+
+      <!-- Front grille block -->
+      <rect x="110" y="300" width="130" height="30" rx="3" fill="#090c16" stroke="rgba(212,247,59,0.35)" stroke-width="0.8"/>
+      <rect x="117" y="306" width="20" height="16" rx="1.5" fill="rgba(212,247,59,0.7)"/>
+      <rect x="142" y="306" width="20" height="16" rx="1.5" fill="rgba(212,247,59,0.45)"/>
+      <rect x="167" y="306" width="20" height="16" rx="1.5" fill="rgba(212,247,59,0.22)"/>
+      <rect x="192" y="306" width="20" height="16" rx="1.5" fill="rgba(212,247,59,0.09)"/>
+      <!-- Grille glow effect -->
+      <rect x="110" y="300" width="130" height="30" rx="3" fill="none"
+        filter="url(#bodyBlur)" stroke="rgba(212,247,59,0.2)" stroke-width="3"/>
+
+      <!-- Rear light cluster -->
+      <rect x="680" y="300" width="130" height="30" rx="3" fill="#090c16" stroke="rgba(55,245,204,0.35)" stroke-width="0.8"/>
+      <rect x="687" y="306" width="32" height="16" rx="1.5" fill="rgba(55,245,204,0.6)"/>
+      <rect x="724" y="306" width="20" height="16" rx="1.5" fill="rgba(55,245,204,0.35)"/>
+      <rect x="749" y="306" width="20" height="16" rx="1.5" fill="rgba(55,245,204,0.15)"/>
+      <rect x="774" y="306" width="20" height="16" rx="1.5" fill="rgba(55,245,204,0.06)"/>
+
+      <!-- Spoiler -->
+      <rect x="580" y="170" width="60" height="6" rx="2" fill="#161a2a" stroke="rgba(212,247,59,0.12)" stroke-width="0.5"/>
+
+      <!-- Front wheel arch -->
+      <path d="M118 340 Q118 298 200 298 Q282 298 282 340 Z" fill="#0a0c16"/>
+      <!-- Rear wheel arch -->
+      <path d="M638 340 Q638 298 720 298 Q802 298 802 340 Z" fill="#0a0c16"/>
+
+      <!-- FRONT WHEEL -->
+      <g id="frontWheel">
+      <circle cx="200" cy="345" r="44" fill="url(#wheelGlow)" opacity="0.3"/>
+      <circle cx="200" cy="345" r="42" fill="#080a14" stroke="rgba(212,247,59,0.25)" stroke-width="1.2"/>
+      <circle cx="200" cy="345" r="30" fill="#0f1220" stroke="rgba(212,247,59,0.12)" stroke-width="1"/>
+      <circle cx="200" cy="345" r="11" fill="#1a1e30"/>
+      <circle cx="200" cy="345" r="5" fill="#d4f73b" opacity="0.5"/>
+      <!-- Spokes -->
+      <g stroke="rgba(212,247,59,0.45)" stroke-width="2" stroke-linecap="round">
+        <line x1="200" y1="316" x2="200" y2="331"/>
+        <line x1="200" y1="359" x2="200" y2="374"/>
+        <line x1="171" y1="345" x2="186" y2="345"/>
+        <line x1="214" y1="345" x2="229" y2="345"/>
+        <line x1="179" y1="324" x2="190" y2="335"/>
+        <line x1="210" y1="355" x2="221" y2="366"/>
+        <line x1="221" y1="324" x2="210" y2="335"/>
+        <line x1="190" y1="355" x2="179" y2="366"/>
+      </g>
+      <!-- Tire detail -->
+      <circle cx="200" cy="345" r="42" fill="none" stroke="rgba(212,247,59,0.06)" stroke-width="6" stroke-dasharray="4 8"/>
+      </g>
+
+      <!-- REAR WHEEL -->
+      <g id="rearWheel">
+      <circle cx="720" cy="345" r="44" fill="url(#wheelGlow)" opacity="0.2"/>
+      <circle cx="720" cy="345" r="42" fill="#080a14" stroke="rgba(55,245,204,0.25)" stroke-width="1.2"/>
+      <circle cx="720" cy="345" r="30" fill="#0f1220" stroke="rgba(55,245,204,0.12)" stroke-width="1"/>
+      <circle cx="720" cy="345" r="11" fill="#1a1e30"/>
+      <circle cx="720" cy="345" r="5" fill="#37f5cc" opacity="0.5"/>
+      <g stroke="rgba(55,245,204,0.45)" stroke-width="2" stroke-linecap="round">
+        <line x1="720" y1="316" x2="720" y2="331"/>
+        <line x1="720" y1="359" x2="720" y2="374"/>
+        <line x1="691" y1="345" x2="706" y2="345"/>
+        <line x1="734" y1="345" x2="749" y2="345"/>
+        <line x1="699" y1="324" x2="710" y2="335"/>
+        <line x1="730" y1="355" x2="741" y2="366"/>
+        <line x1="741" y1="324" x2="730" y2="335"/>
+        <line x1="710" y1="355" x2="699" y2="366"/>
+      </g>
+      <circle cx="720" cy="345" r="42" fill="none" stroke="rgba(55,245,204,0.06)" stroke-width="6" stroke-dasharray="4 8"/>
+      </g>
+
+      <!-- Speed lines -->
+      <line x1="20" y1="268" x2="106" y2="268" stroke="rgba(212,247,59,0.18)" stroke-width="1.5" stroke-linecap="round"/>
+      <line x1="0"  y1="288" x2="98"  y2="288" stroke="rgba(212,247,59,0.1)"  stroke-width="1"   stroke-linecap="round"/>
+      <line x1="28" y1="308" x2="102" y2="308" stroke="rgba(212,247,59,0.06)" stroke-width="1"   stroke-linecap="round"/>
+    </svg>
+  </div>
+
+  <!-- Side text -->
+  <div class="v-text v-left"  id="vleft">↑ SCROLL TO EXPLORE ↑</div>
+  <div class="v-text v-right" id="vright">EST. 2024 — ITZFIZZ DIGITAL</div>
+
+  <!-- Corner marks -->
+  <div class="corner corner-tl"></div>
+  <div class="corner corner-tr"></div>
+  <div class="corner corner-bl"></div>
+  <div class="corner corner-br"></div>
+
+  <!-- Scroll hint -->
+  <div class="scroll-hint" id="scrollHint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-strip">
+    <div class="stat-card">
+      <span class="stat-number" data-target="58">0</span>
+      <span class="stat-label">Increase in<br>pick-up point use</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number" data-target="23">0</span>
+      <span class="stat-label">Decrease in<br>customer phone calls</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number" data-target="27">0</span>
+      <span class="stat-label">Faster delivery<br>route efficiency</span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-number" data-target="40">0</span>
+      <span class="stat-label">Growth in<br>active partners</span>
+    </div>
+  </div>
+</section>
+
+<!-- PIN ZONE -->
+<div class="scroll-space" id="scrollSpace">
+  <div class="scroll-content">
+    <div class="scroll-section">
+      <h2>Revolutionary Delivery Intelligence</h2>
+      <p>ITZFIZZ transforms traditional delivery operations with AI-powered route optimization, real-time tracking, and predictive analytics. Every package moves with precision, every customer receives unparalleled visibility.</p>
+    </div>
+    <div class="scroll-section">
+      <h2>Seamless Platform Integration</h2>
+      <p>Connect effortlessly with existing systems through our robust API. From e-commerce platforms to warehouse management, ITZFIZZ adapts to your workflow, not the other way around.</p>
+    </div>
+    <div class="scroll-section">
+      <h2>Premium User Experience</h2>
+      <p>Every interaction is crafted for excellence. From the moment a package is scanned to final delivery, customers enjoy a frictionless, premium experience backed by cutting-edge technology.</p>
+    </div>
+    <div class="scroll-section">
+      <h2>Scalable Enterprise Solutions</h2>
+      <p>Whether you're a local courier or a global logistics giant, ITZFIZZ scales with your ambitions. Handle thousands of deliveries daily with enterprise-grade reliability and performance.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MARQUEE -->
+<div class="marquee-section">
+  <div class="marquee-track" id="marquee">
+    <div class="marquee-item"><div class="marquee-dot"></div>SCROLL-DRIVEN MOTION</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>GSAP ANIMATION</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>PREMIUM UI/UX</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>ZERO LAYOUT REFLOW</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>60FPS PERFORMANCE</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>DELIVERY INTELLIGENCE</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>REAL-TIME TRACKING</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>AI ROUTE OPTIMIZATION</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>ENTERPRISE SCALABILITY</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>API INTEGRATION</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>ITZFIZZ 2024</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>EDITORIAL DESIGN</div>
+    <!-- duplicate for seamless loop -->
+    <div class="marquee-item"><div class="marquee-dot"></div>SCROLL-DRIVEN MOTION</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>GSAP ANIMATION</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>PREMIUM UI/UX</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>ZERO LAYOUT REFLOW</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>60FPS PERFORMANCE</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>DELIVERY INTELLIGENCE</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>REAL-TIME TRACKING</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>AI ROUTE OPTIMIZATION</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>ENTERPRISE SCALABILITY</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>API INTEGRATION</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>ITZFIZZ 2024</div>
+    <div class="marquee-item"><div class="marquee-dot"></div>EDITORIAL DESIGN</div>
+  </div>
+</div>
+
+<!-- ABOUT SECTION -->
+<section class="about-section" data-num="01">
+  <div class="about-left">
+    <div class="section-tag">Our Platform</div>
+    <h2 class="about-heading">MOTION<br><em>REFINED</em><br>DELIVERY</h2>
+    <a href="#" class="about-cta">Explore Platform <span class="about-cta-arrow">→</span></a>
+  </div>
+  <div class="about-right">
+    <p class="about-body">
+      ITZFIZZ redefines how users interact with digital delivery experiences. Every scroll, every frame — engineered for precision.
+    </p>
+    <p class="about-body">
+      We build interfaces that feel alive, responsive, and unmistakably premium. From route intelligence to real-time visibility, the platform anticipates every need.
+    </p>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features-section">
+  <div class="features-header">
+    <h2 class="features-heading">WHAT WE<br>BUILD</h2>
+    <p class="features-sub">Six pillars that define<br>the ITZFIZZ experience</p>
+  </div>
+  <div class="features-grid">
+    <div class="feature-card">
+      <span class="feature-num">01</span>
+      <span class="feature-icon">⟳</span>
+      <div class="feature-title">Scroll-Driven UI</div>
+      <p class="feature-desc">Animation progress tied directly to scroll position via GSAP ScrollTrigger. Every frame is intentional — no autoplay, no jank.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-num">02</span>
+      <span class="feature-icon">◈</span>
+      <div class="feature-title">GSAP Timelines</div>
+      <p class="feature-desc">Orchestrated entry sequences with staggered reveals, cubic easing, and scrubbed animations that feel tactile and physical.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-num">03</span>
+      <span class="feature-icon">⚡</span>
+      <div class="feature-title">GPU Rendering</div>
+      <p class="feature-desc">Only transform and opacity are animated. Zero layout reflows. 60fps on any device, every single time.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-num">04</span>
+      <span class="feature-icon">∿</span>
+      <div class="feature-title">Fluid Easing</div>
+      <p class="feature-desc">Custom scrub values add natural lag — the element chases scroll position rather than snapping, mimicking real physics.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-num">05</span>
+      <span class="feature-icon">◎</span>
+      <div class="feature-title">Impact Metrics</div>
+      <p class="feature-desc">Animated counter stats reveal with staggered timing, communicating business impact in a memorable, kinetic format.</p>
+    </div>
+    <div class="feature-card">
+      <span class="feature-num">06</span>
+      <span class="feature-icon">✦</span>
+      <div class="feature-title">Premium Design</div>
+      <p class="feature-desc">Dark editorial aesthetic with noise overlay, grid lines, accent glow, and custom cursor — every detail considered.</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">ITZFIZZ</div>
+  <div class="footer-text">© 2024 ITZFIZZ PLATFORM — ALL RIGHTS RESERVED</div>
+  <div class="footer-text">SCROLL-DRIVEN · GSAP · PREMIUM</div>
+</footer>
+
+<script>
+  gsap.registerPlugin(ScrollTrigger);
+
+  // ===== GRAIN CANVAS =====
+  const canvas = document.getElementById('grain');
+  const ctx = canvas.getContext('2d');
+  function resizeGrain() { canvas.width = innerWidth; canvas.height = innerHeight; }
+  resizeGrain();
+  window.addEventListener('resize', resizeGrain);
+  function drawGrain() {
+    const img = ctx.createImageData(canvas.width, canvas.height);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = Math.random() * 255;
+      img.data[i] = img.data[i+1] = img.data[i+2] = v;
+      img.data[i+3] = 15;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  function animGrain() { drawGrain(); setTimeout(() => requestAnimationFrame(animGrain), 80); }
+  animGrain();
+  Object.assign(canvas.style, {
+    position:'fixed', inset:0, pointerEvents:'none', zIndex:10000,
+    width:'100%', height:'100%'
+  });
+
+  // ===== CURSOR =====
+  const cur = document.getElementById('cur');
+  const ring = document.getElementById('cur-ring');
+  const label = document.getElementById('cur-label');
+  let mx=0,my=0,rx=0,ry=0;
+
+  document.addEventListener('mousemove', e => {
+    mx = e.clientX; my = e.clientY;
+    gsap.set(cur, { x: mx-4, y: my-4 });
+  });
+  function animRing() {
+    rx += (mx-rx-18)*0.1; ry += (my-ry-18)*0.1;
+    gsap.set(ring, { x:rx, y:ry });
+    gsap.set(label, { x:mx+16, y:my-6 });
+    requestAnimationFrame(animRing);
+  }
+  animRing();
+
+  const hoverEls = document.querySelectorAll('button, a, .stat-card, .feature-card, .nav-cta');
+  hoverEls.forEach(el => {
+    el.addEventListener('mouseenter', () => {
+      gsap.to(cur,  { scale:3, duration:0.3 });
+      gsap.to(ring, { scale:1.6, opacity:0.8, duration:0.3 });
+    });
+    el.addEventListener('mouseleave', () => {
+      gsap.to(cur,  { scale:1, duration:0.3 });
+      gsap.to(ring, { scale:1, opacity:0.5, duration:0.3 });
+    });
+  });
+
+  // ===== SCROLL PROGRESS =====
+  const sp = document.getElementById('sp');
+  window.addEventListener('scroll', () => {
+    sp.style.width = (scrollY / (document.body.scrollHeight - innerHeight) * 100) + '%';
+  });
+
+  // ===== COUNTER =====
+  function animCounter(el, target) {
+    gsap.fromTo(el,
+      { innerText: 0 },
+      {
+        innerText: target, duration: 2.2, ease: 'power2.out',
+        snap: { innerText: 1 },
+        onUpdate() { el.innerText = Math.round(parseFloat(el.innerText)) + '%'; }
+      }
+    );
+  }
+
+  // ===== LOAD ANIMATION =====
+  const tl = gsap.timeline({ defaults:{ ease:'power3.out' } });
+  tl.to('.char', { opacity:1, y:0, rotateX:0, stagger:0.038, duration:0.85, delay:0.4 })
+    .to('#badge', { opacity:1, y:0, duration:0.7 }, '-=0.4')
+    .from('#car', { opacity:0, scale:0.75, y:70, duration:1.3, ease:'back.out(1.3)' }, '-=0.55')
+    .to('#vleft, #vright', { opacity:1, duration:0.7 }, '-=0.4')
+    .to('.stat-card', { opacity:1, y:0, stagger:0.1, duration:0.65 }, '-=0.3')
+    .to('#scrollHint', { opacity:1, duration:0.6 }, '-=0.2')
+    .call(() => {
+      document.querySelectorAll('.stat-number').forEach(el => {
+        animCounter(el, parseInt(el.dataset.target));
+      });
+    });
+
+  // ===== GLOW PULSE =====
+  gsap.to('.glow-a', {
+    scale:1.25, opacity:0.7, duration:3.5,
+    ease:'sine.inOut', yoyo:true, repeat:-1
+  });
+  gsap.to('.glow-b', {
+    scale:1.15, opacity:0.5, duration:4.5,
+    ease:'sine.inOut', yoyo:true, repeat:-1, delay:1
+  });
+
+  // ===== SCROLL: CAR PARALLAX =====
+  const car = document.getElementById('car');
+  const frontWheel = document.getElementById('frontWheel');
+  const rearWheel = document.getElementById('rearWheel');
+  gsap.timeline({
+    scrollTrigger: {
+      trigger: '#scrollSpace',
+      start: 'top top',
+      end: 'bottom top',
+      scrub: 1,
+      pin: '#hero',
+      pinSpacing: false
+    }
+  })
+  .to(car, { x:'-22vw', scale:1.1, ease:'power1.inOut', duration:0.4 })
+  .to(car, { x:'-42vw', y:'-6vh', rotate:4, scale:0.88, opacity:0.3, ease:'power2.inOut', duration:0.6 }, '>')
+  .to(frontWheel, { rotation: 720, ease:'none', duration:1 }, 0)
+  .to(rearWheel, { rotation: 720, ease:'none', duration:1 }, 0);
+
+  gsap.to('.headline', {
+    scale:1.06, opacity:0, ease:'none',
+    scrollTrigger: { trigger:'#scrollSpace', start:'top top', end:'38% top', scrub:true }
+  });
+  gsap.to('.stats-strip', {
+    y:50, opacity:0, ease:'none',
+    scrollTrigger: { trigger:'#scrollSpace', start:'top top', end:'28% top', scrub:true }
+  });
+  gsap.to('#vleft, #vright, #badge, .scroll-hint', {
+    opacity:0, ease:'none',
+    scrollTrigger: { trigger:'#scrollSpace', start:'top top', end:'22% top', scrub:true }
+  });
+
+  // ===== SCROLL CONTENT ANIMATIONS =====
+  gsap.utils.toArray('.scroll-section').forEach((section, i) => {
+    gsap.fromTo(section,
+      { opacity: 0, y: 50 },
+      {
+        opacity: 1, y: 0, ease: 'none',
+        scrollTrigger: {
+          trigger: section,
+          start: 'top 80%',
+          end: 'top 20%',
+          scrub: true
+        }
+      }
+    );
+  });
+
+  // ===== FEATURE CARDS =====
+  gsap.from('.feature-card', {
+    opacity:0, y:50, stagger:0.09, duration:0.9, ease:'power2.out',
+    scrollTrigger: { trigger:'.features-grid', start:'top 82%' }
+  });
+
+  // About section
+  gsap.from('.about-left > *, .about-right > *', {
+    opacity:0, y:40, stagger:0.15, duration:1, ease:'power3.out',
+    scrollTrigger: { trigger:'.about-section', start:'top 75%' }
+  });
+  gsap.from('.features-header > *', {
+    opacity:0, y:30, stagger:0.15, duration:0.9, ease:'power3.out',
+    scrollTrigger: { trigger:'.features-header', start:'top 80%' }
+  });
+
+  // ===== SPEED LINES =====
+  gsap.fromTo('line[x1="20"], line[x1="0"], line[x1="28"]',
+    { strokeDashoffset:120, strokeDasharray:90, opacity:0 },
+    { strokeDashoffset:0, opacity:1, duration:1.8, stagger:0.22, ease:'power2.inOut', repeat:-1, yoyo:true }
+  );
+
+  console.log('%cITZFIZZ PREMIUM — v2', 'color:#d4f73b;font-family:monospace;font-size:14px;font-weight:bold;background:#04050a;padding:4px 8px');
+</script>
+</body>
+</html>
